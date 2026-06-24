@@ -1,79 +1,853 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FabGear - 製造業設計者向けツール</title>
-    <meta name="description" content="設計現場で困ったことを解決するツールを作ってます。設計歴11年。">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO -->
+  <title>FabGear — 機械設計者のためのツール集</title>
+  <meta name="description" content="設計の現場で毎回調べ直していたものを、ツールにしています。STEP差分チェック公開中。エアシリンダ選定（エラベル Air）近日公開。機械設計者が自分で調べて、自分で決めるためのツール集。">
+  <meta name="keywords" content="機械設計 ツール, STEP 比較, エアシリンダ 選定, 製造業 設計 無料ツール, FabGear">
+
+  <!-- OGP -->
+  <meta property="og:title" content="FabGear — 機械設計者のためのツール集">
+  <meta property="og:description" content="設計の現場で毎回調べ直していたものを、ツールにしています。STEP差分チェック公開中。エアシリンダ選定（エラベル Air）近日公開。">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FabGear">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@FabGear_jp">
+  <meta name="twitter:title" content="FabGear — 機械設計者のためのツール集">
+  <meta name="twitter:description" content="設計の現場で毎回調べ直していたものを、ツールにしています。">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CXLV7Q8QMM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CXLV7Q8QMM');
+
+    // UTM source capture
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var src = params.get('utm_source');
+        if(src){ sessionStorage.setItem('traffic_source', src); }
+      } catch(e) {}
+    })();
+
+    // GA4 helper
+    function gaEvent(name, params) {
+      try {
+        if(typeof gtag !== 'undefined') {
+          gtag('event', name, Object.assign({
+            traffic_source: (function(){
+              try{ return sessionStorage.getItem('traffic_source') || 'direct'; }
+              catch(e){ return 'direct'; }
+            })()
+          }, params || {}));
+        }
+      } catch(e) {}
+    }
+  </script>
+
+  <!-- Google Fonts: same as docokawa & air-cylinder -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== カラー変数（docokawa / air-cylinder-tool と共通） ===== */
+    :root {
+      --bg:           #f5f3f0;
+      --bg-2:         #eae7e2;
+      --bg-3:         #e0ddd7;
+      --amber:        #e05a00;
+      --amber-dim:    #c04800;
+      --amber-glow:   rgba(224,90,0,0.15);
+      --cyan:         #1a8a82;
+      --cyan-dim:     #157a72;
+      --cyan-glow:    rgba(26,138,130,0.15);
+      --ink:          #1a1a1f;
+      --gray-1:       #4a4a55;
+      --gray-2:       #8a8a98;
+      --gray-3:       #d0cdc7;
+      --grid-line:    rgba(26,138,130,0.07);
+      --border:       rgba(26,138,130,0.2);
+      --border-amber: rgba(224,90,0,0.3);
+    }
+
+    /* ===== リセット ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Noto Sans JP", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.75;
+      font-size: 16px;
+      /* 方眼紙グリッド背景 */
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(rgba(78,205,196,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(78,205,196,0.025) 1px, transparent 1px);
+      background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+      background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a:hover { color: var(--ink); }
+
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* ===== スクロールアニメ ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== ナビバー ===== */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(245,243,240,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      height: 52px;
+    }
+    .nav-logo {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .nav-logo::before {
+      content: "// ";
+      color: var(--gray-2);
+      font-size: 11px;
+    }
+    .nav-logo:hover { color: var(--ink); }
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+    .nav-links a {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-1);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .nav-links a:hover { color: var(--amber); }
+
+    /* ===== ヒーロー ===== */
+    header {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 96px 24px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* コーナー計器マーク */
+    header::before,
+    header::after {
+      content: "";
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-color: var(--amber);
+      border-style: solid;
+    }
+    header::before {
+      top: 72px;
+      left: 0;
+      border-width: 2px 0 0 2px;
+    }
+    header::after {
+      bottom: 40px;
+      right: 0;
+      border-width: 0 2px 2px 0;
+    }
+
+    .hero-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: var(--amber);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero-label::before { content: "HUB_00 // "; }
+
+    header h1 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: clamp(28px, 6vw, 52px);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+
+    .h1-accent {
+      display: inline-block;
+      background: var(--amber);
+      height: 3px;
+      width: 64px;
+      margin-bottom: 28px;
+    }
+
+    .hero-tagline {
+      font-size: clamp(14px, 2.8vw, 17px);
+      color: var(--gray-1);
+      line-height: 1.8;
+      max-width: 520px;
+      margin-bottom: 12px;
+    }
+    .hero-tagline strong { color: var(--ink); font-weight: 700; }
+
+    .hero-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--gray-2);
+      letter-spacing: 0.06em;
+    }
+    .hero-meta::before { content: "// "; }
+
+    /* ===== セクション共通 ===== */
+    .section-wrap { border-top: 1px solid var(--border); }
+    .section-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 72px 24px;
+    }
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .section-num {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: var(--amber);
+      letter-spacing: 0.2em;
+      white-space: nowrap;
+    }
+    .section-heading h2 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: clamp(16px, 3.5vw, 22px);
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: 0.02em;
+    }
+    .section-heading::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      min-width: 20px;
+    }
+
+    /* ===== ツールカード ===== */
+    .tools-section { background: var(--bg-2); }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .tool-card {
+      background: var(--bg);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .tool-card:hover { background: var(--bg-3); }
+
+    .tool-card-tag {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      color: var(--gray-2);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .tool-card-name {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--amber);
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .tool-card-desc {
+      font-size: 14px;
+      color: var(--gray-1);
+      line-height: 1.75;
+      flex: 1;
+    }
+
+    .tool-card-link {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--amber);
+      color: #fff;
+      padding: 12px 24px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: background 0.15s, box-shadow 0.15s;
+      align-self: flex-start;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      min-height: 44px;
+    }
+    .tool-card-link:hover {
+      background: #ff8533;
+      box-shadow: 0 0 20px rgba(224,90,0,0.3);
+      color: #fff;
+    }
+    .tool-card-link::after { content: " →"; }
+
+    /* Coming Soon カード */
+    .tool-card.coming-soon {
+      background: var(--bg-2);
+      opacity: 0.85;
+    }
+    .tool-card.coming-soon:hover { background: var(--bg-3); opacity: 1; }
+
+    .coming-soon-badge {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      color: var(--cyan-dim);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      display: inline-block;
+      align-self: flex-start;
+    }
+
+    .tool-card-link-ghost {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      color: var(--cyan);
+      padding: 11px 24px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid var(--cyan-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      align-self: flex-start;
+      min-height: 44px;
+    }
+    .tool-card-link-ghost:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan-glow);
+      color: var(--ink);
+    }
+    .tool-card-link-ghost::after { content: " ↓"; }
+
+    /* ===== 関心フォームセクション ===== */
+    .interest-section { background: var(--bg); }
+
+    .interest-box {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      padding: 36px 32px;
+    }
+
+    .interest-box-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px;
+      color: var(--cyan-dim);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .interest-box-head::before { content: "NEXT_REQUEST // "; }
+
+    .interest-box h3 {
+      font-size: clamp(16px, 3vw, 20px);
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .interest-box-sub {
+      font-size: 14px;
+      color: var(--gray-1);
+      margin-bottom: 28px;
+      line-height: 1.7;
+    }
+
+    .interest-choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .interest-btn {
+      position: relative;
+    }
+    .interest-btn input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .interest-btn label {
+      display: flex;
+      align-items: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--gray-1);
+      padding: 10px 18px;
+      border: 1px solid var(--gray-3);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .interest-btn input:checked + label {
+      border-color: var(--cyan);
+      background: rgba(26,138,130,0.06);
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .interest-btn label:hover {
+      border-color: var(--cyan-dim);
+      color: var(--ink);
+    }
+
+    .btn-interest-submit {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: var(--cyan);
+      padding: 12px 28px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid var(--cyan-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+    }
+    .btn-interest-submit:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan-glow);
+      color: var(--ink);
+    }
+
+    .interest-thanks {
+      display: none;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      color: var(--cyan);
+      padding: 12px 16px;
+      border-left: 3px solid var(--cyan);
+      background: rgba(26,138,130,0.06);
+      margin-top: 16px;
+    }
+    .interest-thanks::before { content: "✓ "; }
+    .interest-thanks.active { display: block; }
+
+    /* ===== Aboutセクション ===== */
+    .about-section { background: var(--bg-2); }
+
+    .about-text {
+      font-size: 15px;
+      color: var(--gray-1);
+      line-height: 1.85;
+      max-width: 560px;
+      margin-bottom: 28px;
+    }
+
+    .about-x-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-1);
+      letter-spacing: 0.06em;
+      border: 1px solid var(--gray-3);
+      padding: 12px 20px;
+      min-height: 44px;
+      transition: all 0.2s;
+    }
+    .about-x-link:hover {
+      color: var(--ink);
+      border-color: var(--ink);
+    }
+    .about-x-link svg { flex-shrink: 0; }
+
+    /* ===== フッター ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--gray-2);
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 12px;
+      line-height: 2;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gray-2);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-copy { color: var(--gray-2); letter-spacing: 0.06em; }
+    .footer-copy::before { content: "// "; }
+
+    /* ===== モバイル ===== */
+    @media (max-width: 640px) {
+      header {
+        padding: 64px 20px 56px;
+      }
+      header::before,
+      header::after {
+        display: none;
+      }
+      .section-inner {
+        padding: 52px 20px;
+      }
+      .tool-grid {
+        grid-template-columns: 1fr;
+      }
+      .interest-box {
+        padding: 28px 20px;
+      }
+      .nav-links {
+        gap: 16px;
+      }
+    }
+    @media (max-width: 380px) {
+      .nav-links a:not(:first-child) {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">FabGear</div>
+
+<!-- ナビバー -->
+<nav class="site-nav">
+  <a href="/" class="nav-logo">FabGear</a>
+  <div class="nav-links">
+    <a href="#tools">ツール</a>
+    <a href="#next">次のリクエスト</a>
+  </div>
+</nav>
+
+<!-- ヒーロー -->
+<header>
+  <div class="hero-label">FabGear</div>
+  <h1>毎回調べ直してたものを、<br>ツールにしてます。</h1>
+  <div class="h1-accent"></div>
+  <p class="hero-tagline">
+    機械設計者が自分で調べて、自分で決める。<br>
+    そのための計算ツールと比較ツールを置いています。
+  </p>
+  <div class="hero-meta">無料 · 登録不要</div>
+</header>
+
+<!-- ツールカード -->
+<div id="tools" class="section-wrap tools-section">
+  <div class="section-inner">
+    <div class="section-heading reveal">
+      <span class="section-num">01 //</span>
+      <h2>ツール一覧</h2>
+    </div>
+
+    <div class="tool-grid">
+
+      <!-- ドコカワ -->
+      <div class="tool-card reveal">
+        <div class="tool-card-tag">TOOL_01 // STEP比較</div>
+        <div class="tool-card-name">ドコカワ</div>
+        <p class="tool-card-desc">
+          「修正しました」というメールと一緒にSTEPが来る。どこが変わったかは書いてない。
+        </p>
+        <a
+          class="tool-card-link"
+          href="https://fabgear-jp.github.io/docokawa/"
+          onclick="gaEvent('hub_tool_click', {tool_name: 'docokawa'})"
+        >使ってみる</a>
+      </div>
+
+      <!-- エラベル Air（Coming Soon） -->
+      <div class="tool-card coming-soon reveal">
+        <div class="tool-card-tag">TOOL_02 // エアシリンダ選定</div>
+        <div class="tool-card-name">エラベル Air</div>
+        <div class="coming-soon-badge">COMING SOON</div>
+        <p class="tool-card-desc">
+          メーカーに聞く前に、まず自分で内径と候補を出したい。空圧シリンダ選定ツール、近日公開。
+        </p>
+        <span
+          class="tool-card-link-ghost"
+          onclick="gaEvent('hub_interest_form_click', {source: 'air_coming_soon'})"
+        >近日公開</span>
+      </div>
+
+      <!-- 部品リスト抽出（簡易版） -->
+      <div class="tool-card reveal">
+        <div class="tool-card-tag">TOOL_03 // 部品リスト抽出</div>
+        <div class="tool-card-name">部品リスト抽出<br>（簡易版）</div>
+        <p class="tool-card-desc">
+          STEPから部品名を自動で抜き出すWebアプリ。無料・ブラウザで動く。
+        </p>
+        <a
+          class="tool-card-link"
+          href="https://docokawa-3tamcfxd9wsaq3bvxfxauw.streamlit.app/"
+          onclick="gaEvent('hub_tool_click', {tool_name: 'parts_list_extractor'})"
+        >使ってみる</a>
+      </div>
+
+      <!-- Coming Soon -->
+      <div class="tool-card coming-soon reveal">
+        <div class="tool-card-tag">NEXT //</div>
+        <div class="coming-soon-badge">COMING SOON</div>
+        <p class="tool-card-desc">
+          何を困っているかによって、次に作るものが変わります。
+        </p>
+        <a
+          class="tool-card-link-ghost"
+          href="#next"
+          onclick="gaEvent('hub_interest_form_click', {source: 'coming_soon_card'})"
+        >教える</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 関心フォーム -->
+<div id="next" class="section-wrap interest-section">
+  <div class="section-inner">
+    <div class="section-heading reveal">
+      <span class="section-num">02 //</span>
+      <h2>次のリクエスト</h2>
+    </div>
+
+    <div class="interest-box reveal" id="interest-box">
+      <div class="interest-box-head">次に欲しいもの</div>
+      <h3>次に困ってるのは、何の選定ですか。</h3>
+      <p class="interest-box-sub">任意回答です。次に作るものの参考にします。</p>
+
+      <div class="interest-choices" id="interest-choices">
+        <div class="interest-btn">
+          <input type="checkbox" id="ip-servo" value="サーボモータ">
+          <label for="ip-servo">サーボモータ</label>
         </div>
-    </nav>
-
-    <header class="hero">
-        <div class="container">
-            <h1>設計現場で困ったことを<br>解決するツールを作ってます</h1>
-            <p class="subtitle">設計歴11年。自分が欲しかったものを形にしていく。</p>
+        <div class="interest-btn">
+          <input type="checkbox" id="ip-linear" value="リニアガイド">
+          <label for="ip-linear">リニアガイド</label>
         </div>
-    </header>
-
-    <section class="about">
-        <div class="container">
-            <h2>FabGearとは</h2>
-            <p>製造業の設計現場で、「こういうのあったらいいのに」と思ったものを作ってます。</p>
-            <p>大げさなことはしてない。日々の面倒を減らすためのツール。</p>
+        <div class="interest-btn">
+          <input type="checkbox" id="ip-bearing" value="ベアリング">
+          <label for="ip-bearing">ベアリング</label>
         </div>
-    </section>
-
-    <section class="tools">
-        <div class="container">
-            <h2>公開ツール</h2>
-
-            <div class="tool-card">
-                <h3><a href="https://fabgear-jp.github.io/docokawa/">ドコカワ</a></h3>
-                <p class="tool-desc">STEPファイルの差分比較ツール</p>
-                <p>設変前後で「どこ変わったかわからない」問題を解決。<br>
-                比較ソフトでSTEPファイル開いても、数値の羅列が出るだけで使えなかった。<br>
-                だから可視化した。</p>
-                <div class="tool-meta">
-                    <span class="tag">Windows</span>
-                    <span class="tag">無料</span>
-                </div>
-            </div>
-
-            <div class="tool-card">
-                <h3><a href="https://docokawa-3tamcfxd9wsaq3bvxfxauw.streamlit.app/">部品リスト抽出（簡易版）</a></h3>
-                <p class="tool-desc">STEPファイルから部品名を自動抽出</p>
-                <p>「このSTEPに何が入ってるか」を確認できる。<br>
-                ブラウザで試せる簡易版。ローカル版なら寸法・体積も出せる。</p>
-                <div class="tool-meta">
-                    <span class="tag">Webアプリ</span>
-                    <span class="tag">無料</span>
-                </div>
-            </div>
+        <div class="interest-btn">
+          <input type="checkbox" id="ip-chain" value="スプロケット・チェーン">
+          <label for="ip-chain">スプロケット・チェーン</label>
         </div>
-    </section>
-
-    <section class="profile">
-        <div class="container">
-            <h2>作ってる人</h2>
-            <p>機械設計11年。3DCAD使ってます。</p>
-            <p>「これ毎回手作業でやるの面倒だな」が溜まってきたので、<br>
-            プログラミング覚えてツール化し始めた。</p>
-            <p>技術記事は<a href="https://qiita.com/FabGear_JP" target="_blank" rel="noopener">Qiita</a>に書いてます。</p>
+        <div class="interest-btn">
+          <input type="checkbox" id="ip-other" value="その他">
+          <label for="ip-other">その他</label>
         </div>
-    </section>
+      </div>
 
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2025-2026 FabGear</p>
-            <p><a href="https://github.com/FabGear-JP" target="_blank" rel="noopener">GitHub</a> |
-               <a href="https://qiita.com/FabGear_JP" target="_blank" rel="noopener">Qiita</a></p>
-        </div>
-    </footer>
+      <button
+        class="btn-interest-submit"
+        id="btn-interest-submit"
+        type="button"
+      >回答する</button>
+
+      <div class="interest-thanks" id="interest-thanks">
+        ありがとうございます。参考にします。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- About -->
+<div class="section-wrap about-section">
+  <div class="section-inner">
+    <div class="section-heading reveal">
+      <span class="section-num">03 //</span>
+      <h2>About</h2>
+    </div>
+
+    <p class="about-text reveal">
+      設計の現場で毎回調べ直していたものを、自分用に作ってます。<br>
+      同じことで詰まっている人がいれば使ってもらえればと思っています。
+    </p>
+
+    <a
+      class="about-x-link reveal"
+      href="https://x.com/FabGear_jp"
+      target="_blank"
+      rel="noopener"
+      onclick="gaEvent('hub_about_x_click', {})"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+      @FabGear_jp
+    </a>
+
+  </div>
+</div>
+
+<!-- フッター -->
+<footer>
+  <div class="footer-links">
+    <a href="https://x.com/FabGear_jp" title="X">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+      X
+    </a>
+    <a href="https://qiita.com/FabGear_JP" title="Qiita">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm.317 17.065c-.69 0-1.306-.177-1.848-.53a3.7 3.7 0 0 1-1.265-1.46 4.53 4.53 0 0 1-.456-2.044c0-.76.152-1.444.456-2.052a3.7 3.7 0 0 1 1.265-1.454c.542-.353 1.159-.53 1.848-.53.69 0 1.306.177 1.848.53a3.7 3.7 0 0 1 1.265 1.454c.304.608.456 1.293.456 2.052 0 .76-.152 1.443-.456 2.044a3.7 3.7 0 0 1-1.265 1.46c-.542.353-1.159.53-1.848.53z"/></svg>
+      Qiita
+    </a>
+    <a href="https://github.com/FabGear-JP" title="GitHub">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <a href="https://fabgear-jp.github.io/docokawa/" title="ドコカワ">
+      ドコカワ（STEP差分）
+    </a>
+    <a href="mailto:fabgear.jp@gmail.com" title="メール">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+      </svg>
+      Mail
+    </a>
+  </div>
+  <p class="footer-copy">FabGear — 設計者が自分で作ったツール群</p>
+  <p class="footer-copy" style="margin-top:4px; font-size:10px; letter-spacing:0.04em;">各ツールの計算結果は参考値です。最終判断は利用者ご自身が行ってください。</p>
+  <p style="margin-top:8px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:0.06em;">
+    <a href="https://fabgear-jp.github.io/privacy.html" style="color:var(--gray-2); text-decoration:none; transition:color 0.15s;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--gray-2)'">プライバシーポリシー</a>
+  </p>
+</footer>
+
+<script>
+// ===========================
+// 関心フォーム送信
+// ===========================
+document.getElementById('btn-interest-submit').addEventListener('click', function() {
+  var checked = document.querySelectorAll('#interest-choices input[type="checkbox"]:checked');
+  var parts = Array.prototype.map.call(checked, function(c){ return c.value; });
+
+  gaEvent('hub_interest_form_submit', {
+    selected_parts: parts.join(',') || 'none',
+    count: parts.length
+  });
+
+  document.getElementById('interest-choices').style.display = 'none';
+  this.style.display = 'none';
+  document.getElementById('interest-thanks').classList.add('active');
+});
+
+// ===========================
+// フォームへのクリック計測
+// ===========================
+document.getElementById('interest-box').addEventListener('click', function(e) {
+  var tgt = e.target;
+  if (tgt.tagName === 'LABEL' || tgt.tagName === 'INPUT') {
+    gaEvent('hub_interest_form_click', {source: 'form_area'});
+  }
+});
+
+// ===========================
+// スクロールアニメ
+// ===========================
+(function() {
+  var els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    els.forEach(function(el){ el.classList.add('visible'); });
+    return;
+  }
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -32px 0px' });
+  els.forEach(function(el){ obs.observe(el); });
+})();
+</script>
+
 </body>
 </html>
