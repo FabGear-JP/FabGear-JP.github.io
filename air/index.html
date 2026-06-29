@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SEO -->
+  <title>エラベル Air — 空圧シリンダ 推力計算・内径選定 | FabGear</title>
+  <meta name="description" content="必要推力とエア圧を入力するだけ。F=π/4×D²×P の推力計算でエアシリンダの内径を逆算し、SMC・CKD・コガネイの対応シリーズを横断表示します。無料、登録不要。">
+  <meta name="keywords" content="エアシリンダ 選定, 空圧シリンダ 推力 計算, エアシリンダ 内径 選定 SMC CKD, 空圧シリンダ 選定ツール, エアシリンダ 計算式, 空圧 推力 計算, シリンダ 内径 逆算, エラベル Air">
+
+  <!-- OGP -->
+  <meta property="og:title" content="エラベル Air — 推力計算・内径選定">
+  <meta property="og:description" content="必要推力とエア圧を入力するだけ。SMC・CKD・コガネイの対応シリーズを横断表示。無料。">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FabGear">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:site" content="@FabGear_jp">
+  <meta name="twitter:title" content="エラベル Air — 推力計算・内径選定">
+  <meta name="twitter:description" content="必要推力とエア圧で内径を逆算。SMC・CKD・コガネイを横断比較。無料、登録不要。">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CXLV7Q8QMM"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-CXLV7Q8QMM');
+
+    // UTM source capture
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var src = params.get('utm_source');
+        if(src){ sessionStorage.setItem('traffic_source', src); }
+      } catch(e) {}
+    })();
+
+    // GA4 helper
+    function gaEvent(name, params) {
+      try {
+        if(typeof gtag !== 'undefined') {
+          gtag('event', name, Object.assign({
+            traffic_source: (function(){try{return sessionStorage.getItem('traffic_source')||'direct';}catch(e){return 'direct';}})()
+          }, params || {}));
+        }
+      } catch(e) {}
+    }
+  </script>
+
+  <!-- Google Fonts: same as docokawa LP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== カラー変数（docokawaと共通） ===== */
+    :root {
+      --bg:           #f5f3f0;
+      --bg-2:         #eae7e2;
+      --bg-3:         #e0ddd7;
+      --amber:        #e05a00;
+      --amber-dim:    #c04800;
+      --amber-glow:   rgba(224,90,0,0.15);
+      --cyan:         #1a8a82;
+      --cyan-dim:     #157a72;
+      --cyan-glow:    rgba(26,138,130,0.15);
+      --ink:          #1a1a1f;
+      --gray-1:       #4a4a55;
+      --gray-2:       #8a8a98;
+      --gray-3:       #d0cdc7;
+      --grid-line:    rgba(26,138,130,0.07);
+      --border:       rgba(26,138,130,0.2);
+      --border-amber: rgba(224,90,0,0.3);
+      --warn-bg:      #fff8f0;
+      --warn-border:  rgba(224,90,0,0.4);
+      --ok-bg:        #f0f8f7;
+      --ok-border:    rgba(26,138,130,0.3);
+    }
+
+    /* ===== リセット ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Noto Sans JP", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.75;
+      font-size: 16px;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+        linear-gradient(rgba(78,205,196,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(78,205,196,0.025) 1px, transparent 1px);
+      background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    }
+
+    a { color: var(--cyan); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--ink); }
+
+    /* ===== スクロールアニメ ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ===== ナビバー ===== */
+    .site-nav {
+      position: sticky; top: 0; z-index: 1000;
+      background: rgba(245,243,240,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 52px;
+    }
+    .nav-logo {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px; font-weight: 700;
+      color: var(--cyan); letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .nav-logo::before { content: "// "; color: var(--gray-2); font-size: 11px; }
+    .nav-logo:hover { color: var(--ink); }
+    .nav-links { display: flex; gap: 24px; }
+    .nav-links a {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; font-weight: 500;
+      color: var(--gray-1); letter-spacing: 0.1em; text-transform: uppercase;
+    }
+    .nav-links a:hover { color: var(--amber); }
+
+    /* ===== ヒーロー ===== */
+    header {
+      max-width: 860px; margin: 0 auto;
+      padding: 72px 24px 56px;
+      position: relative; overflow: hidden;
+    }
+    header::before, header::after {
+      content: "";
+      position: absolute;
+      width: 28px; height: 28px;
+      border-color: var(--amber); border-style: solid;
+    }
+    header::before { top: 60px; left: 0; border-width: 2px 0 0 2px; }
+    header::after  { bottom: 32px; right: 0; border-width: 0 2px 2px 0; }
+
+    .hero-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; color: var(--amber);
+      letter-spacing: 0.22em; text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-label::before { content: "TOOL_01 // "; }
+
+    header h1 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: clamp(32px, 7vw, 56px);
+      font-weight: 700; letter-spacing: -0.01em;
+      line-height: 1.1; margin-bottom: 6px; color: var(--ink);
+    }
+    .h1-accent {
+      display: inline-block;
+      background: var(--amber); height: 3px; width: 64px;
+      margin-bottom: 24px;
+    }
+    .hero-tagline {
+      font-size: clamp(14px, 3vw, 17px);
+      color: var(--gray-1); line-height: 1.75;
+      max-width: 520px; margin-bottom: 20px;
+    }
+    .hero-tagline strong { color: var(--ink); font-weight: 700; }
+    .hero-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; color: var(--gray-2);
+      letter-spacing: 0.06em;
+    }
+    .hero-meta::before { content: "// "; }
+
+    /* ===== セクション共通 ===== */
+    .section-wrap { border-top: 1px solid var(--border); }
+    .section-inner { max-width: 860px; margin: 0 auto; padding: 64px 24px; }
+    .section-heading {
+      display: flex; align-items: baseline; gap: 16px;
+      margin-bottom: 40px;
+    }
+    .section-num {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; color: var(--amber);
+      letter-spacing: 0.2em; white-space: nowrap;
+    }
+    .section-heading h2 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: clamp(16px, 3.5vw, 22px);
+      font-weight: 700; color: var(--ink); letter-spacing: 0.02em;
+    }
+    .section-heading::after {
+      content: ""; flex: 1; height: 1px;
+      background: var(--border); min-width: 20px;
+    }
+
+    /* ===== 選定フォーム ===== */
+    .tool-section { background: var(--bg-2); }
+
+    /* フローコネクター */
+    .flow-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+    .flow-step {
+      display: flex;
+      gap: 0;
+      position: relative;
+    }
+    .flow-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 36px;
+      flex-shrink: 0;
+      margin-right: 24px;
+    }
+    .flow-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--amber);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--amber);
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .flow-line {
+      width: 1px;
+      flex: 1;
+      background: var(--border-amber);
+      min-height: 20px;
+    }
+    .flow-step:last-child .flow-line { display: none; }
+
+    .flow-body {
+      flex: 1;
+      padding-bottom: 36px;
+    }
+    .flow-step:last-child .flow-body { padding-bottom: 0; }
+
+    .step-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; color: var(--amber);
+      letter-spacing: 0.22em; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .step-title {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px; font-weight: 700;
+      color: var(--ink); margin-bottom: 16px;
+    }
+
+    /* フォーム部品 */
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    label.field-label {
+      display: block;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px; font-weight: 500;
+      color: var(--gray-1); letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    label.field-label .unit {
+      color: var(--gray-2); font-size: 11px; margin-left: 4px;
+    }
+    label.field-label .default-note {
+      color: var(--cyan); font-size: 10px; margin-left: 8px;
+    }
+
+    input[type="number"],
+    select {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      padding: 12px 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--gray-3);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      min-height: 44px;
+    }
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px var(--cyan-glow);
+    }
+    input[type="number"].warn-field {
+      border-color: var(--amber);
+      box-shadow: 0 0 0 3px var(--amber-glow);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a8a98' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    /* チェックボックスグループ */
+    .checkbox-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .check-btn {
+      position: relative;
+    }
+    .check-btn input[type="checkbox"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .check-btn label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px; color: var(--gray-1);
+      padding: 10px 16px;
+      border: 1px solid var(--gray-3);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .check-btn input:checked + label {
+      border-color: var(--cyan);
+      background: var(--ok-bg);
+      color: var(--cyan);
+    }
+    .check-btn label:hover {
+      border-color: var(--cyan-dim);
+      color: var(--ink);
+    }
+
+    /* ラジオグループ */
+    .radio-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .radio-btn {
+      position: relative;
+    }
+    .radio-btn input[type="radio"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .radio-btn label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px; color: var(--gray-1);
+      padding: 10px 16px;
+      border: 1px solid var(--gray-3);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+      letter-spacing: 0.03em;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .radio-btn input:checked + label {
+      border-color: var(--amber);
+      background: rgba(224,90,0,0.06);
+      color: var(--amber);
+      font-weight: 700;
+    }
+    .radio-btn label:hover {
+      border-color: var(--amber-dim);
+      color: var(--ink);
+    }
+
+    /* バリデーション警告 */
+    .field-warning {
+      display: none;
+      margin-top: 8px;
+      padding: 10px 14px;
+      background: var(--warn-bg);
+      border-left: 3px solid var(--amber);
+      font-size: 13px;
+      color: var(--amber-dim);
+      font-family: "JetBrains Mono", monospace;
+    }
+    .field-warning::before { content: "⚠ "; }
+    .field-warning.active { display: block; }
+
+    /* 安全率スライダー */
+    .safety-row {
+      display: flex; align-items: center; gap: 16px;
+      flex-wrap: wrap;
+    }
+    input[type="range"] {
+      flex: 1; min-width: 140px; max-width: 200px;
+      accent-color: var(--amber);
+      height: 4px;
+      cursor: pointer;
+    }
+    .safety-val {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 20px; font-weight: 700;
+      color: var(--amber); min-width: 36px;
+    }
+    .safety-note {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; color: var(--gray-2);
+      letter-spacing: 0.04em;
+    }
+    .safety-note::before { content: "// "; }
+
+    /* 計算ボタン */
+    .calc-btn-wrap { margin-top: 36px; }
+    .btn-calc {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--amber);
+      color: #fff;
+      padding: 16px 48px;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      border: none; cursor: pointer;
+      transition: background 0.15s, box-shadow 0.15s;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+      min-height: 52px;
+    }
+    .btn-calc:hover {
+      background: #ff8533;
+      box-shadow: 0 0 24px rgba(224,90,0,0.35);
+    }
+    .btn-calc:active { transform: scale(0.98); }
+    .btn-calc .btn-icon {
+      font-size: 18px; line-height: 1;
+    }
+
+    /* ===== 免責表示 ===== */
+    .disclaimer-box {
+      border-left: 3px solid var(--amber);
+      background: var(--warn-bg);
+      padding: 18px 20px;
+      margin-bottom: 28px;
+    }
+    .disclaimer-box::before {
+      content: "// 免責事項（必読）";
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; color: var(--amber-dim);
+      letter-spacing: 0.15em; display: block;
+      margin-bottom: 8px;
+    }
+    .disclaimer-box p {
+      font-size: 13px; color: var(--gray-1); line-height: 1.75;
+    }
+
+    /* ===== 結果セクション ===== */
+    #result-section { display: none; }
+    #result-section.active { display: block; }
+
+    .result-terminal {
+      background: var(--ink);
+      border: 1px solid var(--border);
+      padding: 24px 28px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .result-terminal::before {
+      content: "CALC_OUTPUT";
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; color: var(--gray-2);
+      letter-spacing: 0.2em; display: block;
+      margin-bottom: 16px;
+    }
+    /* スキャンライン */
+    .result-terminal::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      animation: scan 2s ease-in-out 1;
+    }
+    @keyframes scan {
+      0%   { top: 0; opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    .result-row {
+      display: flex; gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .result-row:last-child { margin-bottom: 0; }
+    .result-key {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; color: var(--gray-2);
+      letter-spacing: 0.1em; min-width: 180px;
+      flex-shrink: 0;
+    }
+    .result-val {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px; font-weight: 700;
+      color: var(--cyan);
+    }
+    .result-val.large {
+      font-size: 28px; color: #5dd9d0;
+    }
+
+    /* ===== メーカー候補カード ===== */
+    .makers-heading {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px; font-weight: 700;
+      color: var(--gray-2); letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .makers-heading::before { content: "02 // "; color: var(--amber); }
+
+    .maker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    .maker-card {
+      background: var(--bg);
+      padding: 24px 20px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .maker-card:hover { background: var(--bg-3); }
+    .maker-tag {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; color: var(--gray-2);
+      letter-spacing: 0.18em; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .maker-name {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 15px; font-weight: 700;
+      color: var(--amber); margin-bottom: 4px;
+    }
+    .maker-series {
+      font-size: 14px; font-weight: 700;
+      color: var(--ink); margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    .maker-note {
+      font-size: 12px; color: var(--gray-1);
+      line-height: 1.6; margin-bottom: 14px;
+    }
+    .maker-link {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700;
+      color: var(--cyan); letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .maker-link:hover {
+      color: var(--amber); border-color: var(--amber);
+    }
+    .maker-link::after { content: " →"; }
+
+    .makers-caution {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px; color: var(--gray-2);
+      letter-spacing: 0.04em; line-height: 1.7;
+    }
+    .makers-caution::before { content: "// "; }
+
+    /* ===== 関心捕捉フォーム ===== */
+    .interest-box {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      padding: 28px 24px;
+      margin-top: 36px;
+    }
+    .interest-box-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px; color: var(--cyan-dim);
+      letter-spacing: 0.2em; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .interest-box-head::before { content: "NEXT_REQUEST // "; }
+    .interest-box h3 {
+      font-size: 16px; font-weight: 700;
+      color: var(--ink); margin-bottom: 6px;
+    }
+    .interest-box p {
+      font-size: 14px; color: var(--gray-1);
+      margin-bottom: 20px; line-height: 1.65;
+    }
+
+    .interest-choices {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-bottom: 20px;
+    }
+    .interest-btn {
+      position: relative;
+    }
+    .interest-btn input[type="checkbox"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .interest-btn label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px; color: var(--gray-1);
+      padding: 10px 18px;
+      border: 1px solid var(--gray-3);
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .interest-btn input:checked + label {
+      border-color: var(--cyan);
+      background: var(--ok-bg);
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .interest-btn label:hover {
+      border-color: var(--cyan-dim);
+    }
+
+    .btn-interest-submit {
+      font-family: "JetBrains Mono", monospace;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent;
+      color: var(--cyan);
+      padding: 12px 28px;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: 1px solid var(--cyan-dim);
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 44px;
+    }
+    .btn-interest-submit:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 0 16px var(--cyan-glow);
+      color: var(--ink);
+    }
+
+    .interest-thanks {
+      display: none;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px; color: var(--cyan);
+      padding: 12px 16px;
+      border-left: 3px solid var(--cyan);
+      background: var(--ok-bg);
+    }
+    .interest-thanks::before { content: "✓ "; }
+    .interest-thanks.active { display: block; }
+
+    /* ===== ロードマップ ===== */
+    .roadmap-section { background: var(--bg-2); }
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .roadmap-card {
+      background: var(--bg);
+      padding: 24px 20px;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .roadmap-card:hover { background: var(--bg-3); }
+    .roadmap-card::before {
+      content: attr(data-status);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 9px; letter-spacing: 0.18em;
+      display: block; margin-bottom: 10px;
+    }
+    .roadmap-card[data-status="LIVE"]::before     { color: var(--cyan); }
+    .roadmap-card[data-status="PLANNED"]::before  { color: var(--amber); }
+    .roadmap-card[data-status="CONSIDERING"]::before { color: var(--gray-2); }
+
+    .roadmap-card h3 {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px; font-weight: 700;
+      color: var(--ink); margin-bottom: 8px;
+    }
+    .roadmap-card[data-status="LIVE"] h3 { color: var(--cyan); }
+    .roadmap-card p {
+      font-size: 12px; color: var(--gray-1); line-height: 1.6;
+    }
+
+    .roadmap-cta {
+      margin-top: 20px;
+      font-size: 14px; color: var(--gray-1);
+    }
+    .roadmap-cta a { color: var(--cyan); font-weight: 500; }
+    .roadmap-cta a:hover { color: var(--amber); }
+
+    /* ===== フッター ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--gray-2);
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 12px; line-height: 2;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .footer-links {
+      display: flex; gap: 24px; justify-content: center; margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--gray-2); font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--cyan); }
+    .footer-copy { color: var(--gray-2); letter-spacing: 0.06em; }
+    .footer-copy::before { content: "// "; }
+
+    /* ===== モバイル ===== */
+    @media (max-width: 640px) {
+      header { padding: 52px 20px 44px; }
+      header::before, header::after { display: none; }
+      .section-inner { padding: 48px 20px; }
+      .flow-connector { width: 24px; margin-right: 16px; }
+      input[type="number"], select { max-width: 100%; }
+      .btn-calc { width: 100%; justify-content: center; }
+      .result-key { min-width: 140px; font-size: 10px; }
+      .result-val.large { font-size: 22px; }
+      .maker-grid { grid-template-columns: 1fr; }
+      .roadmap-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { gap: 14px; }
+    }
+    @media (max-width: 380px) {
+      .roadmap-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ナビバー -->
+<nav class="site-nav">
+  <a href="../" class="nav-logo">エラベル Air</a>
+  <div class="nav-links">
+    <a href="#tool">選定ツール</a>
+    <a href="#roadmap">ロードマップ</a>
+  </div>
+</nav>
+
+<!-- ヒーロー -->
+<header>
+  <div class="hero-label">エラベル Air // 空圧シリンダ選定支援</div>
+  <h1>エアシリンダ、<br>どの型番？</h1>
+  <div class="h1-accent"></div>
+  <p class="hero-tagline">
+    必要推力とエア圧を入れるだけ。<br>
+    <strong>F = π/4 × D² × P</strong> で内径を逆算して、<br>
+    主要3社（SMC・CKD・コガネイ）の対応シリーズを横断で比較します。
+  </p>
+  <div class="hero-meta">登録不要 · 無料 · ブラウザで完結</div>
+</header>
+
+<!-- ===== 選定ツール ===== -->
+<div id="tool" class="section-wrap tool-section">
+  <div class="section-inner">
+    <div class="section-heading reveal">
+      <span class="section-num">01 //</span>
+      <h2>条件を入力</h2>
+    </div>
+
+    <!-- 参考値注記（常時表示） -->
+    <div class="disclaimer-box" style="margin-bottom: 32px;">
+      <p>計算結果は参考値です。最終判断は設計者ご自身で。詳細は下部の免責をご確認ください。</p>
+    </div>
+
+    <div class="flow-stack">
+
+      <!-- STEP 1: 用途と推力 -->
+      <div class="flow-step reveal">
+        <div class="flow-connector">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-body">
+          <div class="step-label">STEP_01</div>
+          <div class="step-title">用途と必要推力</div>
+
+          <div class="form-group">
+            <label class="field-label" for="purpose">用途（動作方向）</label>
+            <select id="purpose">
+              <option value="push">押し付け（ロッドが伸びる方向）</option>
+              <option value="pull">引っ張り（ロッドが縮む方向）</option>
+              <option value="both">両方向（複動シリンダ前提）</option>
+              <option value="clamp">クランプ・固定用途</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label" for="force">
+              必要推力<span class="unit">[N]</span>
+            </label>
+            <input type="number" id="force" min="1" max="99999" placeholder="例: 500" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2: エア圧と安全率 -->
+      <div class="flow-step reveal">
+        <div class="flow-connector">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-body">
+          <div class="step-label">STEP_02</div>
+          <div class="step-title">使用エア圧と安全率</div>
+
+          <div class="form-group">
+            <label class="field-label" for="pressure">
+              使用エア圧<span class="unit">[MPa]</span>
+              <span class="default-note">未入力→ 0.5 MPaで計算</span>
+            </label>
+            <input type="number" id="pressure" min="0.01" max="1.5" step="0.01" placeholder="0.5" inputmode="decimal">
+            <div class="field-warning" id="pressure-warn">
+              エア圧の一般的な使用範囲は 0.1〜0.8 MPa です。この値での選定は参考値の精度が落ちる可能性があります。
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">
+              安全率<span class="default-note">デフォルト 1.5（一般用途推奨値）</span>
+            </label>
+            <div class="safety-row">
+              <input type="range" id="safety" min="1.2" max="3.0" step="0.1" value="1.5">
+              <span class="safety-val" id="safety-display">1.5</span>
+              <span class="safety-note">実際の推力 = 必要推力 × 安全率</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: ストロークと取付方式 -->
+      <div class="flow-step reveal">
+        <div class="flow-connector">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-body">
+          <div class="step-label">STEP_03</div>
+          <div class="step-title">ストロークと取付方式</div>
+
+          <div class="form-group">
+            <label class="field-label" for="stroke">
+              ストローク<span class="unit">[mm]</span>
+            </label>
+            <input type="number" id="stroke" min="1" max="3000" placeholder="例: 100" inputmode="decimal">
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">取付方式</label>
+            <div class="radio-grid">
+              <div class="radio-btn">
+                <input type="radio" name="mount" id="mt-foot" value="foot" checked>
+                <label for="mt-foot">フット</label>
+              </div>
+              <div class="radio-btn">
+                <input type="radio" name="mount" id="mt-flange" value="flange">
+                <label for="mt-flange">フランジ</label>
+              </div>
+              <div class="radio-btn">
+                <input type="radio" name="mount" id="mt-clevis" value="clevis">
+                <label for="mt-clevis">クレビス</label>
+              </div>
+              <div class="radio-btn">
+                <input type="radio" name="mount" id="mt-boss" value="boss">
+                <label for="mt-boss">ボス</label>
+              </div>
+              <div class="radio-btn">
+                <input type="radio" name="mount" id="mt-other" value="other">
+                <label for="mt-other">その他 / 未定</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: 設置環境と動作頻度 -->
+      <div class="flow-step reveal">
+        <div class="flow-connector">
+          <div class="flow-dot"></div>
+          <div class="flow-line"></div>
+        </div>
+        <div class="flow-body">
+          <div class="step-label">STEP_04</div>
+          <div class="step-title">設置環境と動作頻度</div>
+
+          <div class="form-group">
+            <label class="field-label">設置環境（複数選択可）</label>
+            <div class="checkbox-grid">
+              <div class="check-btn">
+                <input type="checkbox" id="env-outdoor" value="outdoor">
+                <label for="env-outdoor">屋外・高湿度</label>
+              </div>
+              <div class="check-btn">
+                <input type="checkbox" id="env-oilmist" value="oilmist">
+                <label for="env-oilmist">油ミスト環境</label>
+              </div>
+              <div class="check-btn">
+                <input type="checkbox" id="env-food" value="food">
+                <label for="env-food">食品衛生対応要</label>
+              </div>
+              <div class="check-btn">
+                <input type="checkbox" id="env-clean" value="clean">
+                <label for="env-clean">クリーンルーム</label>
+              </div>
+              <div class="check-btn">
+                <input type="checkbox" id="env-normal" value="normal" checked>
+                <label for="env-normal">特になし（屋内一般）</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="field-label">動作頻度</label>
+            <div class="radio-grid">
+              <div class="radio-btn">
+                <input type="radio" name="cycle" id="cy-low" value="low" checked>
+                <label for="cy-low">低サイクル（1分に数回以下）</label>
+              </div>
+              <div class="radio-btn">
+                <input type="radio" name="cycle" id="cy-high" value="high">
+                <label for="cy-high">高サイクル（1分に10回以上）</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /flow-stack -->
+
+    <!-- 計算ボタン -->
+    <div class="calc-btn-wrap reveal">
+      <button class="btn-calc" id="btn-calc" type="button">
+        <span class="btn-icon">⚙</span>
+        計算して候補を表示
+      </button>
+    </div>
+
+    <!-- ===== 結果エリア ===== -->
+    <div id="result-section">
+
+      <!-- 免責表示 -->
+      <div class="disclaimer-box" style="margin-top: 48px;">
+        <p>
+          この計算結果は参考値です。実際の選定はメーカーカタログと現場の条件を必ず確認の上、最終判断は設計者ご自身が行ってください。<br>
+          機能安全に関わる用途（安全回路の駆動・人体に接する動作など）では、必ず専門家の監修を受けてください。<br>
+          本ツールの利用により生じた損害について、作者は一切の責任を負いません。<br>
+          <strong>このツールの計算は固定式（F = π/4 × D² × P）のみで、生成AIは使っていません。</strong>
+        </p>
+      </div>
+
+      <!-- 計算結果 -->
+      <div class="result-terminal" id="result-terminal">
+        <div class="result-row">
+          <span class="result-key">必要内径（最小）</span>
+          <span class="result-val large" id="res-diameter">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">推奨規格内径</span>
+          <span class="result-val" id="res-std-diameter">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">計算推力（選定後）</span>
+          <span class="result-val" id="res-actual-force">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">入力推力</span>
+          <span class="result-val" id="res-input-force">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">使用エア圧</span>
+          <span class="result-val" id="res-pressure">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">安全率</span>
+          <span class="result-val" id="res-safety">—</span>
+        </div>
+      </div>
+
+      <!-- 計算結果に対する工学的警告（B1・B2対応） -->
+      <div class="field-warning" id="warn-overflow" style="margin-bottom:12px;">
+        計算内径が規格最大（200 mm）を超えています。空圧シリンダ単体では推力が不足します。複数シリンダの並列配置・油圧シリンダへの変更・設計条件の見直し（エア圧の引き上げ・推力の分散）を検討してください。
+      </div>
+      <div class="field-warning" id="warn-pull" style="margin-bottom:12px;">
+        「引き（後退）」方向の用途です。引き推力はロッド断面分だけ押し推力より小さくなります（内径によって概ね6〜16%の差）。本計算は押し方向の式で求めた最小内径のため、引き方向が主目的の場合は1ランク上の規格内径で選定することを強く推奨します。
+      </div>
+
+      <!-- メーカー候補 -->
+      <div class="makers-heading">対応シリーズ候補（横断比較）</div>
+      <div class="maker-grid" id="maker-grid">
+        <!-- JS で生成 -->
+      </div>
+      <div class="makers-caution">
+        カタログ数値はHTML内に転記していません。各社公式カタログでストローク上限・オプション品番を必ず確認してください。
+      </div>
+
+      <!-- 関心捕捉フォーム -->
+      <div class="interest-box" id="interest-box">
+        <div class="interest-box-head">次に欲しいもの</div>
+        <h3>次の選定支援ツール、何があると助かりますか？</h3>
+        <p>任意回答です。開発の参考にします（送信してもこのページは変わりません）。</p>
+        <div class="interest-choices">
+          <div class="interest-btn">
+            <input type="checkbox" id="ip-servo" value="サーボモータ">
+            <label for="ip-servo">サーボモータ</label>
+          </div>
+          <div class="interest-btn">
+            <input type="checkbox" id="ip-linear" value="リニアガイド">
+            <label for="ip-linear">リニアガイド</label>
+          </div>
+          <div class="interest-btn">
+            <input type="checkbox" id="ip-bearing" value="ベアリング">
+            <label for="ip-bearing">ベアリング</label>
+          </div>
+          <div class="interest-btn">
+            <input type="checkbox" id="ip-chain" value="スプロケット・チェーン">
+            <label for="ip-chain">スプロケット・チェーン</label>
+          </div>
+          <div class="interest-btn">
+            <input type="checkbox" id="ip-other" value="その他">
+            <label for="ip-other">その他</label>
+          </div>
+        </div>
+        <button class="btn-interest-submit" id="btn-interest-submit" type="button">
+          送信
+        </button>
+        <div class="interest-thanks" id="interest-thanks">
+          ありがとうございます。参考にします。
+        </div>
+      </div>
+
+    </div><!-- /result-section -->
+  </div><!-- /section-inner -->
+</div><!-- /tool section -->
+
+<!-- ===== ロードマップ ===== -->
+<div id="roadmap" class="section-wrap roadmap-section">
+  <div class="section-inner">
+    <div class="section-heading reveal">
+      <span class="section-num">02 //</span>
+      <h2>今後追加予定</h2>
+    </div>
+    <div class="roadmap-grid">
+      <div class="roadmap-card reveal" data-status="LIVE">
+        <h3>エラベル Air（エアシリンダ選定）</h3>
+        <p>推力計算・内径逆算・SMC/CKD/コガネイ横断表示。このページです。</p>
+      </div>
+      <div class="roadmap-card reveal" data-status="PLANNED">
+        <h3>サーボモータ選定</h3>
+        <p>慣性モーメント・負荷率・三菱/安川/オムロン横断比較。日本語・国内メーカー対応。</p>
+      </div>
+      <div class="roadmap-card reveal" data-status="PLANNED">
+        <h3>バルブ流量選定</h3>
+        <p>シリンダ速度から必要Cv・流量を逆算。v1.1で追加予定。</p>
+      </div>
+      <div class="roadmap-card reveal" data-status="CONSIDERING">
+        <h3>リニアガイド選定</h3>
+        <p>荷重・モーメント計算からTHK/NSK/IKOの型番を絞り込む。複雑なので検討中。</p>
+      </div>
+      <div class="roadmap-card reveal" data-status="CONSIDERING">
+        <h3>ベアリング選定</h3>
+        <p>荷重・回転数・寿命時間からNTN/NSK対応シリーズを提示。需要次第で着手。</p>
+      </div>
+    </div>
+    <p class="roadmap-cta reveal">
+      欲しいものがある場合は <a href="#interest-box" onclick="gaEvent('roadmap_click',{item:'cta_form'})">上のフォーム</a> から教えてください。優先度の参考にします。
+    </p>
+  </div>
+</div>
+
+<!-- フッター -->
+<footer>
+  <div class="footer-links">
+    <a href="https://x.com/FabGear_jp" title="X">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      X
+    </a>
+    <a href="https://fabgear-jp.github.io/docokawa/" title="ドコカワ">
+      ドコカワ（STEP差分ツール）
+    </a>
+    <a href="mailto:fabgear.jp@gmail.com" title="メール">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      Mail
+    </a>
+  </div>
+  <p class="footer-copy">FabGear — 設計者が自分で作ったツール群</p>
+  <p class="footer-copy" style="margin-top:6px; font-size:10px; letter-spacing:0.04em;">各社名・製品名は各社の商標または登録商標です。当サイトはこれらとは独立した個人ツールです。</p>
+  <p style="margin-top:8px; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:0.06em;">
+    <a href="https://fabgear-jp.github.io/privacy.html" style="color:var(--gray-2); text-decoration:none; transition:color 0.15s;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--gray-2)'">プライバシーポリシー</a>
+  </p>
+</footer>
+
+<script>
+// ===========================
+// データ定義
+// ===========================
+
+// JIS規格の一般的なエアシリンダ内径系列 [mm]
+var STD_BORES = [10, 12, 16, 20, 25, 32, 40, 50, 63, 80, 100, 125, 160, 200];
+
+// メーカー別対応シリーズデータ（カタログ数値はHTMLに転記しない。参照URLのみ）
+// 出典・確認日: 各社製品ページ（下記URL）を2026-06-20にcurl -L で200確認済み。
+// シリーズ名・内径レンジはカタログ改廃により変わる可能性がある。次回確認推奨: 2027-01頃。
+// ※ SMC: 規約「リンクは原則トップページ(www.smcworld.com)へ」に従いコーポレートトップへ統一。
+//   https://www.smcworld.com が 200 確認済み（2026-06-20）。/products/ja/ は 302 のため不採用。
+var MAKER_DATA = {
+  SMC: {
+    name: "SMC",
+    url_base: "https://www.smcworld.com",
+    // 出典: https://www.smcworld.com （SMCコーポレートサイト トップ）
+    // curl 200確認済み: 2026-06-20（末尾スラッシュあり/なし両方 200）
+    // SMC規約準拠: smcworld.com/docs/ja-jp/privacy/「リンクは原則トップページ(www.smcworld.com)へ」
+    // /products/ja/ は 302リダイレクトのため規約トップに統一（確認日 2026-06-20）
+    series: [
+      {
+        bore_min:  6, bore_max:  32,
+        food_ok: false, clean_ok: false,
+        name: "CJ2シリーズ",
+        note: "ミニシリンダ。省スペース設計。内径6〜32 mm。標準・耐久モデルあり。",
+        // SMC規約準拠でトップへ・確認日2026-06-20
+        url: "https://www.smcworld.com"
+      },
+      {
+        bore_min: 20, bore_max: 100,
+        food_ok: false, clean_ok: false,
+        name: "C85シリーズ",
+        note: "コンパクトシリンダ。内径20〜100 mm。コスト・汎用性のバランスがよい標準品。",
+        // SMC規約準拠でトップへ・確認日2026-06-20
+        url: "https://www.smcworld.com"
+      },
+      {
+        bore_min: 32, bore_max: 200,
+        food_ok: false, clean_ok: false,
+        name: "CM2シリーズ",
+        note: "標準空圧シリンダ。内径32〜200 mm。一般工場環境の定番。",
+        // SMC規約準拠でトップへ・確認日2026-06-20
+        url: "https://www.smcworld.com"
+      },
+      {
+        bore_min: 32, bore_max: 200,
+        food_ok: true, clean_ok: true,
+        name: "CA2シリーズ",
+        note: "クリーン・防じん対応。クリーンルームや粉じん環境に適する。内径32〜200 mm。",
+        // SMC規約準拠でトップへ・確認日2026-06-20
+        url: "https://www.smcworld.com"
+      }
+    ]
+  },
+  CKD: {
+    name: "CKD",
+    url_base: "https://www.ckd.co.jp/kiki/jp/",
+    // 出典: https://www.ckd.co.jp/kiki/jp/product/list?cid=17&sid=0 （CKDシリンダ商品一覧）
+    // curl -L 200確認済み: 2026-06-20
+    series: [
+      {
+        bore_min:  6, bore_max:  40,
+        food_ok: false, clean_ok: false,
+        name: "SCMシリーズ",
+        note: "スーパーマイクロシリンダ。内径6〜40 mm。省スペースで高サイクル対応。",
+        // 出典: https://www.ckd.co.jp/kiki/jp/product/detail/4/SCM
+        // curl -L 200確認済み: 2026-06-20
+        url: "https://www.ckd.co.jp/kiki/jp/product/detail/4/SCM"
+      },
+      {
+        bore_min: 40, bore_max: 100,
+        food_ok: false, clean_ok: false,
+        name: "SCA2シリーズ",
+        note: "セレックスシリンダ（一般形タイロッド中口径）。内径40〜100 mm。汎用品。",
+        // 出典: https://www.ckd.co.jp/kiki/jp/product/detail/2/SCA2
+        // curl -L 200確認済み: 2026-06-20（旧SCAは廃番→現行SCA2に変更）
+        url: "https://www.ckd.co.jp/kiki/jp/product/detail/2/SCA2"
+      },
+      {
+        bore_min: 20, bore_max: 100,
+        food_ok: true, clean_ok: true,
+        name: "食品・クリーン対応シリーズ",
+        note: "食品製造工程用FPシリーズ等。ステンレス・樹脂仕様。内径20〜100 mm。用途に応じてCKDに確認。",
+        // 出典: https://www.ckd.co.jp/kiki/jp/product/specific/168 （食品製造工程用）
+        // curl -L 200確認済み: 2026-06-20
+        url: "https://www.ckd.co.jp/kiki/jp/product/specific/168"
+      }
+    ]
+  },
+  KOGANEI: {
+    name: "コガネイ",
+    url_base: "https://product.koganei.co.jp/",
+    // 出典: https://product.koganei.co.jp/image/02000000 （コガネイエアシリンダ製品一覧）
+    // WebFetch 200確認済み: 2026-06-24（/image/ はコガネイ正規製品ページのURLスキーム。画像ファイル直リンクではなくHTMLページ）
+    series: [
+      {
+        bore_min:  6, bore_max: 125,
+        food_ok: false, clean_ok: false,
+        name: "ベーシックシリンダ",
+        note: "標準形エアシリンダ。内径6〜125 mm。複動・単動・両ロッド等バリエーション豊富。",
+        // 出典: https://product.koganei.co.jp/image/02010100 （ベーシックシリンダ一覧）
+        // WebFetch 200確認済み: 2026-06-24（旧GU/FAシリーズはベーシックシリンダに統合）
+        url: "https://product.koganei.co.jp/image/02010100"
+      },
+      {
+        bore_min: 20, bore_max:  63,
+        food_ok: false, clean_ok: false,
+        name: "スリムシリンダ",
+        note: "コンパクト・省スペース設計。内径20〜63 mm。",
+        // 出典: https://product.koganei.co.jp/image/02010500 （スリムシリンダ一覧）
+        // WebFetch 200確認済み: 2026-06-24（旧URLの02010050はフレキシブル対応シリンダのページのため修正）
+        url: "https://product.koganei.co.jp/image/02010500"
+      },
+      {
+        bore_min:  6, bore_max: 125,
+        food_ok: true, clean_ok: true,
+        name: "クリーン対応シリンダ",
+        note: "半導体・液晶・食品工程向けクリーン仕様。内径6〜125 mm。",
+        // 出典: https://product.koganei.co.jp/image/07010000 （クリーン機器用エアシリンダ）
+        // WebFetch 200確認済み: 2026-06-24
+        url: "https://product.koganei.co.jp/image/07010000"
+      }
+    ]
+  }
+};
+
+// ===========================
+// ユーティリティ
+// ===========================
+
+// 必要内径の計算: D = sqrt(4F / (π×P))  [mm]
+// F: 必要推力[N], P: エア圧[MPa=N/mm²], safety: 安全率
+// 【注意】この式は「押し（前進）」方向の推力に基づく計算です。
+// 「引き（後退）」方向は有効断面積がロッド断面分だけ小さくなるため、
+// 実際の引き推力は計算値より小さくなります（ロッド径比で概ね6〜16%の差）。
+// 引き方向が主目的の場合は、計算内径を1ランク上の規格内径で選定することを推奨します。
+function calcDiameter(forceN, pressureMPa, safety) {
+  var F = forceN * safety;
+  var P = pressureMPa; // 1 MPa = 1 N/mm²
+  var D = Math.sqrt((4 * F) / (Math.PI * P));
+  return D;
+}
+
+// JIS規格内径に切り上げ
+// 戻り値: { bore: 規格内径[mm], overflow: true/false }
+// overflow=true の場合、計算内径がSTD_BORES最大値(200mm)を超えている
+function stdBoreResult(d) {
+  for (var i = 0; i < STD_BORES.length; i++) {
+    if (STD_BORES[i] >= d) return { bore: STD_BORES[i], overflow: false };
+  }
+  return { bore: STD_BORES[STD_BORES.length - 1], overflow: true };
+}
+
+// 後方互換ラッパー（内部でstdBoreResultを使う）
+function stdBore(d) {
+  return stdBoreResult(d).bore;
+}
+
+// 選定後の実推力 [N]（押し方向の理論推力）
+function calcForce(boreD, pressureMPa) {
+  return (Math.PI / 4) * boreD * boreD * pressureMPa;
+}
+
+// 環境フラグの取得
+function getEnvFlags() {
+  return {
+    outdoor: document.getElementById('env-outdoor').checked,
+    oilmist: document.getElementById('env-oilmist').checked,
+    food:    document.getElementById('env-food').checked,
+    clean:   document.getElementById('env-clean').checked
+  };
+}
+
+// ===========================
+// メーカー候補フィルタ
+// ===========================
+// 食品衛生・クリーン対応シリーズの判定フラグ
+// 各シリーズにフラグを持たせてフィルタと分離することで名称依存バグを防ぐ
+// （以前は名称文字列比較で判定していたが、MAKER_DATAの名称と一致しないシリーズがあり
+//  フォールバック時に非対応シリーズが食品/クリーン環境で表示されるバグが存在した）
+function filterSeries(makerKey, boreD, env, cycle) {
+  var maker = MAKER_DATA[makerKey];
+  var matched = [];
+
+  // 食品衛生フラグ・クリーンフラグはシリーズ定義の food_ok / clean_ok を参照する
+  maker.series.forEach(function(s) {
+    if (boreD < s.bore_min || boreD > s.bore_max) return;
+
+    if (env.food) {
+      // food_ok フラグを持つシリーズのみを対象とする
+      if (s.food_ok) matched.push(s);
+      return;
+    }
+    if (env.clean) {
+      // clean_ok フラグを持つシリーズのみを対象とする
+      if (s.clean_ok) matched.push(s);
+      return;
+    }
+    // 通常環境: food_ok/clean_ok 専用品を除外して汎用品を優先
+    // （食品専用品は通常環境でも使えるが、コスト高のため汎用品を先に出す）
+    matched.push(s);
+  });
+
+  // 候補なし かつ 食品/クリーン要件あり
+  // → 「この内径・環境に対応するシリーズがない」ことを明示するため空を返す
+  // （以前のフォールバックは非対応シリーズを誤表示する原因だったため廃止）
+  // 候補なし かつ 通常環境 → 従来どおりフォールバック（内径レンジで再マッチ）
+  if (matched.length === 0 && !env.food && !env.clean) {
+    maker.series.forEach(function(s) {
+      if (boreD >= s.bore_min && boreD <= s.bore_max) matched.push(s);
+    });
+  }
+
+  // 最大2件まで返す
+  return matched.slice(0, 2);
+}
+
+// ===========================
+// 結果表示
+// ===========================
+function showResult(minD, stdD, actualF, inputF, pressure, safety) {
+  document.getElementById('res-diameter').textContent      = minD.toFixed(1) + ' mm';
+  document.getElementById('res-std-diameter').textContent  = stdD + ' mm（規格内径に繰り上げ）';
+  document.getElementById('res-actual-force').textContent  = Math.round(actualF) + ' N（' + stdD + ' mm × ' + pressure + ' MPa）';
+  document.getElementById('res-input-force').textContent   = inputF + ' N';
+  document.getElementById('res-pressure').textContent      = pressure + ' MPa';
+  document.getElementById('res-safety').textContent        = safety + '（実際に必要な推力 = ' + Math.round(inputF * safety) + ' N）';
+
+  var grid = document.getElementById('maker-grid');
+  grid.innerHTML = '';
+
+  var env   = getEnvFlags();
+  var cycle = document.querySelector('input[name="cycle"]:checked').value;
+
+  var makers = ['SMC', 'CKD', 'KOGANEI'];
+  makers.forEach(function(mkey) {
+    var candidates = filterSeries(mkey, stdD, env, cycle);
+    if (candidates.length === 0) {
+      // 候補なし → 総合カタログへのリンクカードを表示
+      var card = document.createElement('div');
+      card.className = 'maker-card';
+      card.innerHTML =
+        '<div class="maker-tag">' + mkey + '</div>' +
+        '<div class="maker-name">' + MAKER_DATA[mkey].name + '</div>' +
+        '<div class="maker-series">該当シリーズを確認</div>' +
+        '<div class="maker-note">この内径では自動マッチングができませんでした。メーカーカタログで直接確認してください。</div>' +
+        '<a class="maker-link" href="' + MAKER_DATA[mkey].url_base + '" target="_blank" rel="noopener"' +
+        ' onclick="gaEvent(\'maker_link_click\',{maker:\'' + mkey + '\',bore:' + stdD + '})">カタログを確認</a>';
+      grid.appendChild(card);
+      return;
+    }
+
+    candidates.forEach(function(s) {
+      var card = document.createElement('div');
+      card.className = 'maker-card';
+      card.innerHTML =
+        '<div class="maker-tag">' + mkey + '</div>' +
+        '<div class="maker-name">' + MAKER_DATA[mkey].name + '</div>' +
+        '<div class="maker-series">' + s.name + '</div>' +
+        '<div class="maker-note">' + s.note + '</div>' +
+        '<a class="maker-link" href="' + s.url + '" target="_blank" rel="noopener"' +
+        ' onclick="gaEvent(\'maker_link_click\',{maker:\'' + mkey + '\',series:\'' + s.name + '\',bore:' + stdD + '})">公式カタログを確認</a>';
+      grid.appendChild(card);
+    });
+  });
+
+  var rs = document.getElementById('result-section');
+  rs.classList.add('active');
+  rs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===========================
+// バリデーション
+// ===========================
+function validatePressure(val) {
+  var warn = document.getElementById('pressure-warn');
+  var input = document.getElementById('pressure');
+  if (val !== '' && (parseFloat(val) < 0.1 || parseFloat(val) > 0.8)) {
+    warn.classList.add('active');
+    input.classList.add('warn-field');
+    return false; // 警告あり（でも計算はする）
+  } else {
+    warn.classList.remove('active');
+    input.classList.remove('warn-field');
+    return true;
+  }
+}
+
+// ===========================
+// イベント: 安全率スライダー
+// ===========================
+document.getElementById('safety').addEventListener('input', function() {
+  document.getElementById('safety-display').textContent = parseFloat(this.value).toFixed(1);
+});
+
+// ===========================
+// イベント: エア圧バリデーション
+// ===========================
+document.getElementById('pressure').addEventListener('blur', function() {
+  validatePressure(this.value);
+});
+document.getElementById('pressure').addEventListener('input', function() {
+  if (this.value !== '') validatePressure(this.value);
+});
+
+// ===========================
+// イベント: 計算ボタン
+// ===========================
+document.getElementById('btn-calc').addEventListener('click', function() {
+  var forceVal    = document.getElementById('force').value.trim();
+  var pressureVal = document.getElementById('pressure').value.trim();
+  var safetyVal   = parseFloat(document.getElementById('safety').value);
+
+  // 必要推力チェック
+  if (forceVal === '' || parseFloat(forceVal) <= 0) {
+    document.getElementById('force').focus();
+    alert('必要推力[N]を入力してください。');
+    return;
+  }
+
+  // エア圧デフォルト
+  var pressure = pressureVal === '' ? 0.5 : parseFloat(pressureVal);
+  if (isNaN(pressure) || pressure <= 0) pressure = 0.5;
+
+  // 範囲外警告（計算は続行）
+  validatePressure(pressureVal === '' ? '0.5' : pressureVal);
+
+  var force = parseFloat(forceVal);
+  var safety = safetyVal;
+
+  gaEvent('calc_submit', {
+    force_n:      force,
+    pressure_mpa: pressure,
+    safety_factor: safety
+  });
+
+  var purpose = document.getElementById('purpose').value;
+  var minD = calcDiameter(force, pressure, safety);
+  var boreResult = stdBoreResult(minD);
+  var stdD = boreResult.bore;
+  var actualF = calcForce(stdD, pressure);
+
+  // B2: 内径超過警告
+  var warnOverflow = document.getElementById('warn-overflow');
+  if (boreResult.overflow) {
+    warnOverflow.classList.add('active');
+  } else {
+    warnOverflow.classList.remove('active');
+  }
+
+  // B1: 引き動作警告
+  var warnPull = document.getElementById('warn-pull');
+  if (purpose === 'pull') {
+    warnPull.classList.add('active');
+  } else {
+    warnPull.classList.remove('active');
+  }
+
+  showResult(minD, stdD, actualF, force, pressure, safety);
+
+  gaEvent('result_shown', {
+    min_diameter:  parseFloat(minD.toFixed(1)),
+    std_diameter:  stdD,
+    actual_force:  Math.round(actualF)
+  });
+});
+
+// ===========================
+// イベント: 関心捕捉フォーム
+// ===========================
+document.getElementById('interest-box').addEventListener('click', function(e) {
+  var tgt = e.target;
+  if (tgt.tagName === 'LABEL' || tgt.tagName === 'INPUT') {
+    gaEvent('other_parts_form_click', {});
+  }
+});
+
+document.getElementById('btn-interest-submit').addEventListener('click', function() {
+  var checked = document.querySelectorAll('#interest-box input[type="checkbox"]:checked');
+  var parts = Array.prototype.map.call(checked, function(c){ return c.value; });
+
+  gaEvent('other_parts_form_submit', {
+    selected_parts: parts.join(',') || 'none',
+    count: parts.length
+  });
+
+  document.getElementById('interest-box').querySelector('.interest-choices').style.display = 'none';
+  document.getElementById('btn-interest-submit').style.display = 'none';
+  document.getElementById('interest-thanks').classList.add('active');
+});
+
+// ===========================
+// イベント: ロードマップクリック
+// ===========================
+document.querySelectorAll('.roadmap-card').forEach(function(card) {
+  card.addEventListener('click', function() {
+    var h3 = this.querySelector('h3');
+    gaEvent('roadmap_click', { item: h3 ? h3.textContent : 'unknown' });
+  });
+});
+
+// ===========================
+// スクロールアニメ
+// ===========================
+(function() {
+  var els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window)) {
+    els.forEach(function(el) { el.classList.add('visible'); });
+    return;
+  }
+  var obs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -32px 0px' });
+  els.forEach(function(el) { obs.observe(el); });
+})();
+</script>
+
+</body>
+</html>
